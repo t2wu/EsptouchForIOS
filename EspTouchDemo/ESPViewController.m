@@ -41,6 +41,7 @@
     [self performSelector:@selector(dismissAlert:) withObject:alertView afterDelay:dismissSeconds];
 }
 
+// This one doesn't seem like the same thread as the one on __interupt
 -(void) onEsptouchResultAddedWithResult: (ESPTouchResult *) result
 {
     NSLog(@"EspTouchDelegateImpl onEsptouchResultAddedWithResult bssid: %@", result.bssid);
@@ -113,10 +114,15 @@
                     const int maxDisplayCount = 5;
                     if ([firstResult isSuc])
                     {
-                        
+                        NSLog(@"tim array number: %d", [esptouchResultArray count]);
                         for (int i = 0; i < [esptouchResultArray count]; ++i)
                         {
                             ESPTouchResult *resultInArray = [esptouchResultArray objectAtIndex:i];
+                            
+                            NSString *ipaddr = [ESP_NetUtil descriptionInetAddr4ByData:resultInArray.ipAddrData];
+                            NSLog(@"Finished: device%d,bssid=%@,InetAddress=%@.", i, resultInArray.bssid, ipaddr);
+                            
+                            
                             [mutableStr appendString:[resultInArray description]];
                             [mutableStr appendString:@"\n"];
                             count++;
@@ -125,6 +131,8 @@
                                 break;
                             }
                         }
+                        
+
                         
                         if (count < [esptouchResultArray count])
                         {
@@ -152,40 +160,40 @@
     }
 }
 
-- (void) tapConfirmForResult
-{
-    // do confirm
-    if (self._isConfirmState)
-    {
-        [self._spinner startAnimating];
-        [self enableCancelBtn];
-        NSLog(@"ESPViewController do confirm action...");
-        dispatch_queue_t  queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-        dispatch_async(queue, ^{
-            NSLog(@"ESPViewController do the execute work...");
-            // execute the task
-            ESPTouchResult *esptouchResult = [self executeForResult];
-            // show the result to the user in UI Main Thread
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self._spinner stopAnimating];
-                [self enableConfirmBtn];
-                // when canceled by user, don't show the alert view again
-                if (!esptouchResult.isCancelled)
-                {
-                    [[[UIAlertView alloc] initWithTitle:@"Execute Result" message:[esptouchResult description] delegate:nil cancelButtonTitle:@"I know" otherButtonTitles: nil] show];
-                }
-            });
-        });
-    }
-    // do cancel
-    else
-    {
-        [self._spinner stopAnimating];
-        [self enableConfirmBtn];
-        NSLog(@"ESPViewController do cancel action...");
-        [self cancel];
-    }
-}
+//- (void) tapConfirmForResult
+//{
+//    // do confirm
+//    if (self._isConfirmState)
+//    {
+//        [self._spinner startAnimating];
+//        [self enableCancelBtn];
+//        NSLog(@"ESPViewController do confirm action...");
+//        dispatch_queue_t  queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+//        dispatch_async(queue, ^{
+//            NSLog(@"ESPViewController do the execute work...");
+//            // execute the task
+//            ESPTouchResult *esptouchResult = [self executeForResult];
+//            // show the result to the user in UI Main Thread
+//            dispatch_async(dispatch_get_main_queue(), ^{
+//                [self._spinner stopAnimating];
+//                [self enableConfirmBtn];
+//                // when canceled by user, don't show the alert view again
+//                if (!esptouchResult.isCancelled)
+//                {
+//                    [[[UIAlertView alloc] initWithTitle:@"Execute Result" message:[esptouchResult description] delegate:nil cancelButtonTitle:@"I know" otherButtonTitles: nil] show];
+//                }
+//            });
+//        });
+//    }
+//    // do cancel
+//    else
+//    {
+//        [self._spinner stopAnimating];
+//        [self enableConfirmBtn];
+//        NSLog(@"ESPViewController do cancel action...");
+//        [self cancel];
+//    }
+//}
 
 #pragma mark - the example of how to cancel the executing task
 
@@ -219,21 +227,21 @@
 
 #pragma mark - the example of how to use executeForResult
 
-- (ESPTouchResult *) executeForResult
-{
-    [self._condition lock];
-    NSString *apSsid = self.ssidLabel.text;
-    NSString *apPwd = self._pwdTextView.text;
-    NSString *apBssid = self.bssid;
-    self._esptouchTask =
-    [[ESPTouchTask alloc]initWithApSsid:apSsid andApBssid:apBssid andApPwd:apPwd];
-    // set delegate
-    [self._esptouchTask setEsptouchDelegate:self._esptouchDelegate];
-    [self._condition unlock];
-    ESPTouchResult * esptouchResult = [self._esptouchTask executeForResult];
-    NSLog(@"ESPViewController executeForResult() result is: %@",esptouchResult);
-    return esptouchResult;
-}
+//- (ESPTouchResult *) executeForResult
+//{
+//    [self._condition lock];
+//    NSString *apSsid = self.ssidLabel.text;
+//    NSString *apPwd = self._pwdTextView.text;
+//    NSString *apBssid = self.bssid;
+//    self._esptouchTask =
+//    [[ESPTouchTask alloc]initWithApSsid:apSsid andApBssid:apBssid andApPwd:apPwd];
+//    // set delegate
+//    [self._esptouchTask setEsptouchDelegate:self._esptouchDelegate];
+//    [self._condition unlock];
+//    ESPTouchResult * esptouchResult = [self._esptouchTask executeForResult];
+//    NSLog(@"ESPViewController executeForResult() result is: %@",esptouchResult);
+//    return esptouchResult;
+//}
 
 
 // enable confirm button

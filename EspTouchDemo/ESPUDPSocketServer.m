@@ -319,7 +319,7 @@
 
 - (NSData *) receiveSpecLenBytes4: (int)len
 {
-    ssize_t recNumber = recv(self._sck_fd4, _buffer, BUFFER_SIZE, 0);
+    ssize_t recNumber = recv(self._sck_fd4, _buffer, BUFFER_SIZE, 0); // tim: will wait here
     if (recNumber==len)
     {
         NSData *data = [[NSData alloc]initWithBytes:_buffer length:recNumber];

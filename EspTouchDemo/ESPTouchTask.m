@@ -8,6 +8,7 @@
 
 //  The usage of NSCondition refer to: https://gist.github.com/prachigauriar/8118909
 
+#import <UIKit/UIKit.h>
 #import "ESPTouchTask.h"
 #import "ESP_ByteUtil.h"
 #import "ESPTouchGenerator.h"
@@ -268,7 +269,7 @@
         while ([self._esptouchResultArray count] < [self._parameter getExpectTaskResultCount] && !self._isInterrupt)
         {
             if ([self._parameter isIPv4Supported]) {
-                receiveData = [self._server receiveSpecLenBytes4:expectDataLen];
+                receiveData = [self._server receiveSpecLenBytes4:expectDataLen]; // tim: will wait here
             } else {
                 receiveData = [self._server receiveSpecLenBytes6:expectDataLen];
             }
@@ -318,6 +319,8 @@
                         [ESP_NetUtil parseInetAddrByData:receiveData
                                                andOffset:[self._parameter getEsptouchResultOneLen] + [self._parameter getEsptouchResultMacLen]
                                                 andCount:[self._parameter getEsptouchResultIpLen]];
+                        
+                        // tim: This following eventually calls the delegate
                         [self __putEsptouchResultIsSuc:YES AndBssid:bssid AndInetAddr:inetAddrData];
                     }
                 }
@@ -329,6 +332,11 @@
                     NSLog(@"ESPTouchTask __listenAsyn() receive rubbish message, just ignore");
                 }
             }
+            
+            NSLog(@"expected task count: %d", [self._parameter getExpectTaskResultCount]);
+            NSLog(@"True or false: %d", [self._esptouchResultArray count] < [self._parameter getExpectTaskResultCount]);
+            NSLog(@"True or false2: %d", !self._isInterrupt);
+
         }
         self._isSuc = [self._esptouchResultArray count] >= [self._parameter getExpectTaskResultCount];
         [self __interrupt];
@@ -458,6 +466,7 @@
     
     if (!self._isInterrupt)
     {
+        // tim: sleep here..get called by interrupt from __listenAsync
         [self __sleep: [self._parameter getWaitUdpReceivingMillisecond]];
         [self __interrupt];
     }
